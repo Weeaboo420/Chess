@@ -1,0 +1,2 @@
+dither - 15%
+detail - 45%
