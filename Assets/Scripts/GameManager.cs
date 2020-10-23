@@ -8,8 +8,7 @@ public class GameManager : MonoBehaviour
     private Dictionary<int, Piece> _pieces = new Dictionary<int, Piece>();
     private List<GameObject> _moves = new List<GameObject>();
 
-    private PieceColor _currentPlayerColor = PieceColor.White; //The color of the current player
-
+    private PieceColor _currentPlayerColor = PieceColor.White;
     private GameObject _piecePrefab;
     private GameObject _movePrefab;
     private GameObject _piecesContainer;
@@ -21,6 +20,9 @@ public class GameManager : MonoBehaviour
     private Vector2 _minBounds, _maxBounds;
     private bool _shouldLerpPiece = false;
     private Vector2 _newPiecePosition;
+
+    private Transform _cameraTransform;
+    private bool _cameraFlipped = false;
 
     //Is a within the margin of b?
     //Example: InRange(5, 6, 2) > true
@@ -52,6 +54,11 @@ public class GameManager : MonoBehaviour
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
+        if(Input.GetKeyDown(KeyCode.X)) //Flip the board 180 degrees
+        {
+            FlipCamera();
+        }
+
     }
 
     private void Start()
@@ -69,6 +76,8 @@ public class GameManager : MonoBehaviour
         _movesContainer = new GameObject("Moves Container");
         _movesContainer.transform.position = new Vector3(0, 0, 0);
 
+        _cameraTransform = GameObject.FindObjectOfType<Camera>().GetComponent<Transform>();
+
         //Generate board
         int index = 0; //Used for making the checkered pattern
 
@@ -76,7 +85,7 @@ public class GameManager : MonoBehaviour
         {
             for(int x = 0; x < Globals.BoardSize; x++, index++)
             {
-                GameObject newTile = Instantiate(tilePrefab, new Vector3(x*0.8f - 2.53f - 0.4f, -y*0.8f + 2.53f + 0.2f, 10), Quaternion.identity);
+                GameObject newTile = Instantiate(tilePrefab, new Vector3(x*0.8f - 4*0.7f, -y*0.8f + 4*0.7f, 10), Quaternion.identity);
                 newTile.transform.parent = board.transform;
 
                 if(x == 0 && y == 0) //Set negative bounds for the board
@@ -204,6 +213,31 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        FlipCamera();
+
+    }
+
+    private void FlipCamera()
+    {        
+        _cameraFlipped = !_cameraFlipped;
+        switch(_cameraFlipped)
+        {
+            case true:
+                _cameraTransform.rotation = Quaternion.Euler(new Vector3(_cameraTransform.localEulerAngles.x, _cameraTransform.localEulerAngles.y, 180f));
+                break;
+            case false:
+                _cameraTransform.rotation = Quaternion.Euler(new Vector3(_cameraTransform.localEulerAngles.x, _cameraTransform.localEulerAngles.y, 0));
+                break;
+        }
+
+        foreach(Transform piece in _piecesContainer.transform)
+        {   
+            SpriteRenderer pieceSpriteRenderer = piece.GetComponent<SpriteRenderer>();         
+            pieceSpriteRenderer.flipX = _cameraFlipped;
+            pieceSpriteRenderer.flipY = _cameraFlipped;
+
+        }
+        
     }
 
     public void MovePiece(Vector2 NewPosition)
